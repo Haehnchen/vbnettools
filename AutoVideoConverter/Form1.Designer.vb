@@ -36,13 +36,15 @@ Partial Class Form1
         Me.lblautosize = New System.Windows.Forms.Label
         Me.ckDebug = New System.Windows.Forms.CheckBox
         Me.tbInfo = New System.Windows.Forms.TabPage
-        Me.Label4 = New System.Windows.Forms.Label
         Me.txtInfo = New System.Windows.Forms.TextBox
+        Me.Label4 = New System.Windows.Forms.Label
+        Me.PictureBox1 = New System.Windows.Forms.PictureBox
         Me.TabControl1.SuspendLayout()
         Me.tbFiles.SuspendLayout()
         Me.tbConvert.SuspendLayout()
         Me.GroupBox1.SuspendLayout()
         Me.tbInfo.SuspendLayout()
+        CType(Me.PictureBox1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'chksound
@@ -134,6 +136,7 @@ Partial Class Form1
         '
         Me.tbFiles.AllowDrop = True
         Me.tbFiles.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+        Me.tbFiles.Controls.Add(Me.PictureBox1)
         Me.tbFiles.Controls.Add(Me.butOpenFiles)
         Me.tbFiles.Controls.Add(Me.Label3)
         Me.tbFiles.Location = New System.Drawing.Point(4, 25)
@@ -213,6 +216,16 @@ Partial Class Form1
         Me.tbInfo.Text = "Info"
         Me.tbInfo.UseVisualStyleBackColor = True
         '
+        'txtInfo
+        '
+        Me.txtInfo.BackColor = System.Drawing.SystemColors.Control
+        Me.txtInfo.Location = New System.Drawing.Point(3, 3)
+        Me.txtInfo.Multiline = True
+        Me.txtInfo.Name = "txtInfo"
+        Me.txtInfo.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
+        Me.txtInfo.Size = New System.Drawing.Size(289, 138)
+        Me.txtInfo.TabIndex = 10
+        '
         'Label4
         '
         Me.Label4.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
@@ -224,15 +237,15 @@ Partial Class Form1
         Me.Label4.TabIndex = 9
         Me.Label4.Text = "Daniel Espendiller - espend.de"
         '
-        'txtInfo
+        'PictureBox1
         '
-        Me.txtInfo.BackColor = System.Drawing.SystemColors.Control
-        Me.txtInfo.Location = New System.Drawing.Point(3, 3)
-        Me.txtInfo.Multiline = True
-        Me.txtInfo.Name = "txtInfo"
-        Me.txtInfo.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
-        Me.txtInfo.Size = New System.Drawing.Size(289, 138)
-        Me.txtInfo.TabIndex = 10
+        Me.PictureBox1.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.PictureBox1.Image = Global.AutoVideoConverter.My.Resources.Resources.mplayer_32
+        Me.PictureBox1.Location = New System.Drawing.Point(259, 6)
+        Me.PictureBox1.Name = "PictureBox1"
+        Me.PictureBox1.Size = New System.Drawing.Size(33, 26)
+        Me.PictureBox1.TabIndex = 9
+        Me.PictureBox1.TabStop = False
         '
         'Form1
         '
@@ -255,6 +268,7 @@ Partial Class Form1
         Me.GroupBox1.PerformLayout()
         Me.tbInfo.ResumeLayout(False)
         Me.tbInfo.PerformLayout()
+        CType(Me.PictureBox1, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
 
     End Sub
@@ -276,5 +290,6 @@ Partial Class Form1
     Friend WithEvents tbInfo As System.Windows.Forms.TabPage
     Friend WithEvents Label4 As System.Windows.Forms.Label
     Friend WithEvents txtInfo As System.Windows.Forms.TextBox
+    Friend WithEvents PictureBox1 As System.Windows.Forms.PictureBox
 
 End Class
