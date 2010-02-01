@@ -90,6 +90,9 @@
   <ItemGroup>
     <BaseApplicationManifest Include="My Project\app.manifest" />
     <None Include="app.config" />
+    <None Include="mplayer\mencoder.conf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
       <LastGenOutput>Application.Designer.vb</LastGenOutput>
