@@ -8,11 +8,11 @@ Imports System.Runtime.InteropServices
 
 ' Die Werte der Assemblyattribute überprüfen
 
-<Assembly: AssemblyTitle("umwandeln")> 
-<Assembly: AssemblyDescription("")> 
-<Assembly: AssemblyCompany("")> 
-<Assembly: AssemblyProduct("umwandeln")> 
-<Assembly: AssemblyCopyright("")> 
+<Assembly: AssemblyTitle("AutoVideoConverter")> 
+<Assembly: AssemblyDescription("GUI To Convert Video With MPlayer")> 
+<Assembly: AssemblyCompany("espend.de")> 
+<Assembly: AssemblyProduct("AutoVideoConverter")> 
+<Assembly: AssemblyCopyright("Espendiller, Daniel")> 
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>

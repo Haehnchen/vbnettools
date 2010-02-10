@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Basic Express 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AutoVideoConverter", "AutoVideoConverter.vbproj", "{AC7A4124-AE69-42EA-A463-372801FEC13E}"
 EndProject
 Global
