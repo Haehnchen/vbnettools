@@ -1,3 +1,4 @@
+'$Id$
 Module example
     'or in single line: Dim _Files As New FileSearch(New IO.DirectoryInfo("d:\Media\"), "*.nfo")
     Dim RecursiveScan As New FileSearch
