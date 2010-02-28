@@ -8,10 +8,10 @@ Imports System.Runtime.InteropServices
 
 ' Die Werte der Assemblyattribute überprüfen
 
-<Assembly: AssemblyTitle("WindowsApplication1")> 
-<Assembly: AssemblyDescription("")> 
-<Assembly: AssemblyCompany("")> 
-<Assembly: AssemblyProduct("WindowsApplication1")> 
+<Assembly: AssemblyTitle("HamachiBroadcastFixGUI")> 
+<Assembly: AssemblyDescription("It will send network broadcast message from one network device to another")> 
+<Assembly: AssemblyCompany("Daniel Espendiller")> 
+<Assembly: AssemblyProduct("HamachiBroadcastFixGUI")> 
 <Assembly: AssemblyCopyright("Copyright ©  2010")> 
 <Assembly: AssemblyTrademark("")> 
 
