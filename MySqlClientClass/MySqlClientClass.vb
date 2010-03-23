@@ -17,6 +17,7 @@ Public Class MySqlClientClass
                 ";port=" & _ConnectionInfo.Port & ";charset=utf8"
                 _Connection.Open()
             End If
+
         Catch ex As Exception
             MsgBox("Error Connecting to the database: " & ex.Message)
             Return False
@@ -32,43 +33,43 @@ Public Class MySqlClientClass
 
         End Try
     End Sub
-    Sub InsOnDupWithMoreKeys(ByVal table As String, ByVal SetFields As List(Of FieldDefinition), ByVal WhereDefinition As List(Of FieldDefinition))
-        'insert into constr_file_info (`rID`,`pID`,`fID`,`Size`) VALUES ('2','2','1','5555') ON DUPLICATE KEY UPDATE `Size`=VALUES(`Size`)
-        'insert into constr_file_info (rID,pID,fID,Size) VALUES ('2','2','1','5555') ON DUPLICATE KEY UPDATE `Size`=VALUES(`Size`); select rID,pID,fID from constr_file_info where rID='2' AND pID='2' AND fID='1'
-
+    ''' <summary>
+    ''' Will insert the values of the SetFields and WhereDefinition.
+    ''' If we get any Duplicate Keys we update the fields out of SetFields.
+    ''' </summary>
+    ''' <param name="table">Database table to work with</param>
+    ''' <param name="SetFields">The field values to insert</param>
+    ''' <param name="WhereDefinition">Should contains any Key Field of the Table</param>
+    ''' <remarks></remarks>
+    Sub InsertOnDuplicateKey(ByVal table As String, ByVal SetFields As List(Of FieldDefinition), ByVal WhereDefinition As List(Of FieldDefinition))
         Dim oCommand As MySqlCommand = _Connection.CreateCommand
-        Dim h1 As New List(Of FieldDefinition)
 
-        Me.FieldsToDefinition(WhereDefinition, h1)
-        Me.FieldsToDefinition(SetFields, h1)
+        Dim AllFields As List(Of FieldDefinition) = Me.ConcatFields(WhereDefinition, SetFields)
 
-        Dim str As String = "INSERT INTO `" & table & "` (" & JoinFieldName(h1) & _
-        ") VALUES (" & JoinParameterName(h1) & _
-        ") ON DUPLICATE KEY UPDATE " & JoinValues(SetFields)
+        oCommand.CommandText = "INSERT INTO `" & table & "` (" & Me.JoinFieldName(AllFields) & _
+        ") VALUES (" & Me.JoinParameterName(AllFields) & _
+        ") ON DUPLICATE KEY UPDATE " & Me.JoinValues(SetFields)
 
-        oCommand.CommandText = str
-        Me.FieldsToParameters(h1, oCommand)
+        Me.FieldsToParameters(AllFields, oCommand)
 
         oCommand.ExecuteNonQuery()
         oCommand.Dispose()
         oCommand = Nothing
 
     End Sub
-    Sub Delete(ByVal table As String, ByVal WhereDefinition As List(Of FieldDefinition), Optional ByVal Limit As Boolean = True)
-        Dim oCommand As MySqlCommand = _Connection.CreateCommand
-        oCommand.CommandText = "DELETE FROM " & table & Me.WhereCommand(WhereDefinition)
-        Me.FieldsToParameters(WhereDefinition, oCommand)
-        If Limit = True Then oCommand.CommandText &= " LIMIT 1"
-        oCommand.ExecuteNonQuery()
-        oCommand.Dispose()
-        oCommand = Nothing
-
-    End Sub
-    Function UniSingleKey(ByVal table As String, ByVal SetField As FieldDefinition) As String
+    ''' <summary>
+    ''' Will insert the values in the SetField with no further duplication or update check.
+    ''' if we get any error (duplicate keys,...) the error will ignored and we get back the primary key of the row
+    ''' </summary>
+    ''' <param name="table">Database table</param>
+    ''' <param name="SetField">The fields to insert</param>
+    ''' <returns>The primary key of the row</returns>
+    ''' <remarks></remarks>
+    Function Insert(ByVal table As String, ByVal SetField As FieldDefinition) As String
         'Dim helperList As New List(Of mysql2.FieldDefinition) : helperList.Add(WhereDefinition)
 
-        Dim SetFieldList As List(Of MySqlClientClass.FieldDefinition) = SingleFieldToList(SetField)
-        Dim oCommand As MySqlCommand = _Connection.CreateCommand
+        Dim SetFieldList As List(Of MySqlClientClass.FieldDefinition) = Me.SingleFieldToList(SetField)
+        Dim oCommand As MySqlCommand = Me._Connection.CreateCommand
 
         oCommand.CommandText = "INSERT IGNORE " & table & Me.SetCommand(SetFieldList) & "; Select _rowid from " & table & " " & Me.WhereCommand(SetFieldList)
 
@@ -79,14 +80,38 @@ Public Class MySqlClientClass
         oCommand = Nothing
         Return sqlres
     End Function
-
-    Public Function SelectCommand(ByVal table As String, Optional ByVal InputFields As String = "*", Optional ByVal WhereParamList As List(Of FieldDefinition) = Nothing) As SQLResult
+    ''' <summary>
+    ''' Delete rows that match the WhereDefinition. by security: on default only one row will be delete (LIMIT 1)
+    ''' Set Limit to false if you want to delete more than one row
+    ''' </summary>
+    ''' <param name="table">Database table</param>
+    ''' <param name="WhereDefinition">Where Fields of DELETE command</param>
+    ''' <param name="Limit">Delete only one row</param>
+    ''' <remarks></remarks>
+    Sub Delete(ByVal table As String, ByVal WhereDefinition As List(Of FieldDefinition), Optional ByVal Limit As Boolean = True)
+        Dim oCommand As MySqlCommand = _Connection.CreateCommand
+        oCommand.CommandText = "DELETE FROM " & table & Me.WhereCommand(WhereDefinition)
+        Me.FieldsToParameters(WhereDefinition, oCommand)
+        If Limit = True Then oCommand.CommandText &= " LIMIT 1"
+        oCommand.ExecuteNonQuery()
+        oCommand.Dispose()
+        oCommand = Nothing
+    End Sub
+    ''' <summary>
+    ''' A Simple Database select statement
+    ''' </summary>
+    ''' <param name="table">Database table</param>
+    ''' <param name="InputFields">Comma-separated values of input fields for SELECT statement</param>
+    ''' <param name="WhereDefinition">Filter by Where statement</param>
+    ''' <returns>SQLResult</returns>
+    ''' <remarks></remarks>
+    Public Function [Select](ByVal table As String, Optional ByVal InputFields As String = "*", Optional ByVal WhereDefinition As List(Of FieldDefinition) = Nothing) As SQLResult
         Dim WhereStr As String = ""
 
         Dim oCommand As MySqlCommand = _Connection.CreateCommand
-        If Not IsNothing(WhereParamList) Then
-            WhereStr = Me.WhereCommand(WhereParamList)
-            For Each PD As FieldDefinition In WhereParamList
+        If Not IsNothing(WhereDefinition) Then
+            WhereStr = Me.WhereCommand(WhereDefinition)
+            For Each PD As FieldDefinition In WhereDefinition
                 oCommand.Parameters.AddWithValue(PD.FieldName, PD.Value)
             Next
         End If
@@ -96,34 +121,89 @@ Public Class MySqlClientClass
         Return Me.CommandToDatatable(oCommand)
 
     End Function
+    ''' <summary>
+    ''' Insert/Update field to table with one Primary key and auto_increment and return the primary key as integer
+    ''' </summary>
+    ''' <param name="table">table in database</param>
+    ''' <param name="SetFields">SET defintion of sql statement</param>
+    ''' <param name="WhereDefinition">Where defintion of sql statement</param>
+    ''' <param name="ForceUpdate">if primary keys exists force update of row?</param>
+    ''' <returns>ID of where clause as integer</returns>
+    ''' <remarks></remarks>
+    Function InsertAutoIncrement(ByVal table As String, ByVal SetFields As List(Of FieldDefinition), ByVal WhereDefinition As List(Of FieldDefinition), Optional ByVal ForceUpdate As Boolean = False) As Integer
+        'Dim helperList As New List(Of mysql2.FieldDefinition) : helperList.Add(WhereDefinition)
+
+        Dim res As MySqlClientClass.SQLResult = Me.Select(table, "Count(*)", WhereDefinition)
+        Dim oCommand As MySqlCommand = _Connection.CreateCommand
+        Dim sqlStr As String = ""
+        If res.ToSingleInteger > 0 Then
+            'need Update
+
+            If ForceUpdate = True Then
+                oCommand.CommandText = "UPDATE " & table & Me.SetCommand(SetFields) & Me.WhereCommand(WhereDefinition)
+                'Me.FieldsToParameters(WhereDefinition, oCommand)
+                'oCommand.Parameters.AddWithValue(WhereDefinition.FieldName, WhereDefinition.Value)
+            Else
+                Return Me.Select(table, "_rowid", WhereDefinition).ToSingleInteger
+            End If
+        Else
+            'need insert"
+
+            oCommand.CommandText = "INSERT " & table & Me.SetCommand(ConcatFields(WhereDefinition, SetFields))
+        End If
+
+
+        Me.FieldsToParameters(SetFields, oCommand)
+        Me.FieldsToParameters(WhereDefinition, oCommand)
+
+        oCommand.ExecuteNonQuery()
+
+        Return Me.Select(table, "_rowid", WhereDefinition).ToSingleInteger
+
+    End Function
+
+    ''' <summary>
+    ''' Insert/Update Value to table with more then one Primary key field and return Fields as SQLResult (row)
+    ''' </summary>
+    ''' <param name="table">table in database</param>
+    ''' <param name="SetFields">SET defintion of sql statement</param>
+    ''' <param name="WhereDefinition">Where defintion of sql statement</param>
+    ''' <param name="ForceUpdate">if primary keys exists force update of row?</param>
+    ''' <returns>SQLResult of where clause</returns>
+    ''' <remarks></remarks>
+    Function InsertWithMorePrimaryKeys(ByVal table As String, ByVal SetFields As List(Of FieldDefinition), ByVal WhereDefinition As List(Of FieldDefinition), Optional ByVal ForceUpdate As Boolean = False) As SQLResult
+        Dim res As MySqlClientClass.SQLResult = Me.Select(table, "Count(*)", WhereDefinition)
+        Dim oCommand As MySqlCommand = _Connection.CreateCommand
+        Dim sqlStr As String = ""
+        If res.ToSingleInteger > 0 Then
+            'Debug.WriteLine("need update")
+            'need Update
+            If ForceUpdate = True Then
+                'Debug.WriteLine("updated")
+                oCommand.CommandText = "UPDATE " & table & Me.SetCommand(SetFields) & Me.WhereCommand(WhereDefinition)
+            Else
+                Return Me.Select(table, Me.GetPrimaryKeys(WhereDefinition), WhereDefinition)
+            End If
+        Else
+            'need insert"
+            oCommand.CommandText = "INSERT " & table & Me.SetCommand(ConcatFields(WhereDefinition, SetFields))
+        End If
+
+        Me.FieldsToParameters(WhereDefinition, oCommand)
+        Me.FieldsToParameters(SetFields, oCommand)
+
+        oCommand.ExecuteNonQuery()
+
+        Return Me.Select(table, Me.GetPrimaryKeys(WhereDefinition), WhereDefinition)
+
+
+    End Function
+
+#Region "MySQL Command Helpers"
     Private Function GenSQLCommand() As MySqlCommand
         Dim Cmd As New MySqlCommand
         Cmd.Connection = _Connection
         Return Cmd
-    End Function
-    Private Function CommandToDatatable(ByVal oCommand As MySqlCommand)
-        Dim oDataset As New DataSet
-        Dim oAdapter As New MySqlDataAdapter
-        oAdapter.SelectCommand = oCommand
-        oAdapter.Fill(oDataset)
-
-        Dim ret As New SQLResult(oDataset)
-        oDataset.Dispose()
-        oAdapter.Dispose()
-
-        Return ret
-    End Function
-    Private Function WhereCommand(ByVal WhereParamList As List(Of FieldDefinition)) As String
-        Dim strWhere As String = "" : Dim strSQL As String = ""
-
-        For Each PD As FieldDefinition In WhereParamList
-            If strWhere.Length > 0 Then strWhere &= " AND "
-            strWhere &= "(" & PD.FieldName & " = ?" & PD.FieldName & ")"
-        Next
-
-        If strWhere.Length > 0 Then strSQL &= " Where " & strWhere
-
-        Return strSQL
     End Function
     Private Function SetCommand(ByVal FieldParamList As List(Of FieldDefinition)) As String
         Dim strWhere As String = "" : Dim strSQL As String = ""
@@ -137,7 +217,30 @@ Public Class MySqlClientClass
 
         Return strSQL
     End Function
+    Private Function WhereCommand(ByVal WhereParamList As List(Of FieldDefinition)) As String
+        Dim strWhere As String = "" : Dim strSQL As String = ""
 
+        For Each PD As FieldDefinition In WhereParamList
+            If strWhere.Length > 0 Then strWhere &= " AND "
+            strWhere &= "(" & PD.FieldName & " = ?" & PD.FieldName & ")"
+        Next
+
+        If strWhere.Length > 0 Then strSQL &= " Where " & strWhere
+
+        Return strSQL
+    End Function
+    Private Function CommandToDatatable(ByVal oCommand As MySqlCommand)
+        Dim oDataset As New DataSet
+        Dim oAdapter As New MySqlDataAdapter
+        oAdapter.SelectCommand = oCommand
+        oAdapter.Fill(oDataset)
+
+        Dim ret As New SQLResult(oDataset)
+        oDataset.Dispose()
+        oAdapter.Dispose()
+
+        Return ret
+    End Function
     Private Function GetPrimaryKeys(ByVal WhereDefinition As List(Of FieldDefinition)) As String
         Dim back As String = ""
         For Each field As MySqlClientClass.FieldDefinition In WhereDefinition
@@ -146,103 +249,8 @@ Public Class MySqlClientClass
         Next
         Return back
     End Function
-
-    Private Function SingleFieldToList(ByVal fields As MySqlClientClass.FieldDefinition) As List(Of MySqlClientClass.FieldDefinition)
-        Dim tList As New List(Of MySqlClientClass.FieldDefinition)
-        tList.Add(fields)
-        Return tList
-    End Function
-
-    ''' <summary>
-    ''' Insert/Update field to table with one Primary key and auto_increment and return the primary key as integer
-    ''' </summary>
-    ''' <param name="table">table in database</param>
-    ''' <param name="SetFields">SET defintion of sql statement</param>
-    ''' <param name="WhereDefinition">Where defintion of sql statement</param>
-    ''' <param name="ForceUpdate">if primary keys exists force update of row?</param>
-    ''' <returns>ID of where clause as integer</returns>
-    ''' <remarks></remarks>
-    Function InsUpdSingleKey(ByVal table As String, ByVal SetFields As List(Of FieldDefinition), ByVal WhereDefinition As List(Of FieldDefinition), Optional ByVal ForceUpdate As Boolean = False) As Integer
-        'Dim helperList As New List(Of mysql2.FieldDefinition) : helperList.Add(WhereDefinition)
-
-        Dim res As MySqlClientClass.SQLResult = Me.SelectCommand(table, "Count(*)", WhereDefinition)
-        Dim oCommand As MySqlCommand = _Connection.CreateCommand
-        Dim sqlStr As String = ""
-        If res.ToSingleInteger > 0 Then
-            'need Update
-
-            If ForceUpdate = True Then
-                oCommand.CommandText = "UPDATE " & table & Me.SetCommand(SetFields) & Me.WhereCommand(WhereDefinition)
-                FieldsToParameters(WhereDefinition, oCommand)
-                'oCommand.Parameters.AddWithValue(WhereDefinition.FieldName, WhereDefinition.Value)
-            Else
-                Return Me.SelectCommand(table, "_rowid", WhereDefinition).ToSingleInteger
-            End If
-        Else
-            'need insert"
-            oCommand.CommandText = "INSERT " & table & Me.SetCommand(SetFields)
-        End If
-
-
-        Me.FieldsToParameters(SetFields, oCommand)
-
-        oCommand.ExecuteNonQuery()
-
-
-        Return Me.SelectCommand(table, "_rowid", WhereDefinition).ToSingleInteger
-
-    End Function
-    ''' <summary>
-    ''' Insert/Update Value to table with more then one Primary key and return Fields as SQLResult (row)
-    ''' </summary>
-    ''' <param name="table">table in database</param>
-    ''' <param name="SetFields">SET defintion of sql statement</param>
-    ''' <param name="WhereDefinition">Where defintion of sql statement</param>
-    ''' <param name="ForceUpdate">if primary keys exists force update of row?</param>
-    ''' <returns>SQLResult of where clause</returns>
-    ''' <remarks></remarks>
-    Function InsUpdWithMoreKeys(ByVal table As String, ByVal SetFields As List(Of FieldDefinition), ByVal WhereDefinition As List(Of FieldDefinition), Optional ByVal ForceUpdate As Boolean = False) As SQLResult
-        Dim res As MySqlClientClass.SQLResult = Me.SelectCommand(table, "Count(*)", WhereDefinition)
-        Dim oCommand As MySqlCommand = _Connection.CreateCommand
-        Dim sqlStr As String = ""
-        If res.ToSingleInteger > 0 Then
-            'Debug.WriteLine("need update")
-            'need Update
-            If ForceUpdate = True Then
-                'Debug.WriteLine("updated")
-                oCommand.CommandText = "UPDATE " & table & Me.SetCommand(SetFields) & Me.WhereCommand(WhereDefinition)
-            Else
-                Return Me.SelectCommand(table, Me.GetPrimaryKeys(WhereDefinition), WhereDefinition)
-            End If
-        Else
-            'need insert"
-            'Debug.WriteLine("need insert")
-            Dim h1 As New List(Of FieldDefinition)
-
-            Me.FieldsToDefinition(WhereDefinition, h1)
-            Me.FieldsToDefinition(SetFields, h1)
-
-            oCommand.CommandText = "INSERT " & table & Me.SetCommand(h1)
-        End If
-
-        Me.FieldsToParameters(WhereDefinition, oCommand)
-        Me.FieldsToParameters(SetFields, oCommand)
-
-        ' Debug.WriteLine(oCommand.CommandText)
-        Try
-
-
-            oCommand.ExecuteNonQuery()
-        Catch ex As Exception
-
-        End Try
-
-        Return Me.SelectCommand(table, Me.GetPrimaryKeys(WhereDefinition), WhereDefinition)
-
-
-    End Function
-
-
+#End Region
+#Region "MySQL Field Builders"
     Private Function JoinFieldName(ByVal Definition As List(Of FieldDefinition)) As String
         Dim back As String = ""
         For Each field As FieldDefinition In Definition
@@ -284,24 +292,23 @@ Public Class MySqlClientClass
             NewFieldDef.Add(wField)
         Next
     End Sub
+    Private Function ConcatFields(ByVal ParamArray Args() As List(Of FieldDefinition)) As List(Of FieldDefinition)
 
-    '    MySqlCommand oCommand = oConn.CreateCommand(); 
-    'oCommand.CommandText = "select * from cust_customer where id=?id"; 
+        Dim backList As New List(Of FieldDefinition)
 
-    'MySqlParameter oParam = oCommand.Parameters.Add("?id", MySqlDbType.Int32); 
-    'oParam.Value = ld; 
+        For i As Integer = 0 To Args.GetUpperBound(0)
+            FieldsToDefinition(Args(i), backList)
+        Next
 
-    'oCommand.Connection = oConn; 
-    'DataSet oDataSet = new DataSet(); 
-    'MySqlDataAdapter oAdapter = new MySqlDataAdapter(); 
-    'oAdapter.SelectCommand = oCommand; 
-    'oAdapter.Fill(oDataSet); 
-    'oConn.Close(); 
-    'return oDataSet; 
+        Return backList
 
-
-
-
+    End Function
+    Private Function SingleFieldToList(ByVal fields As MySqlClientClass.FieldDefinition) As List(Of MySqlClientClass.FieldDefinition)
+        Dim tList As New List(Of MySqlClientClass.FieldDefinition)
+        tList.Add(fields)
+        Return tList
+    End Function
+#End Region
 #Region "HelperDef"
     Structure FieldDefinition
         Dim FieldName As String
