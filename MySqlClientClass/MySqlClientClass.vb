@@ -1,4 +1,6 @@
 ﻿'$Id$
+'$HeadURL$
+
 Imports MySql.Data.MySqlClient
 
 Public Class MySqlClientClass
@@ -14,7 +16,7 @@ Public Class MySqlClientClass
                 _Connection.ConnectionString = "DATABASE=" & _ConnectionInfo.Database & ";" & _
                 "SERVER=" & _ConnectionInfo.Server & ";user id=" & _ConnectionInfo.User & _
                 ";password=" & _ConnectionInfo.Password & _
-                ";port=" & _ConnectionInfo.Port & ";charset=utf8"
+                ";port=" & _ConnectionInfo.Port & ";charset=utf8;Allow Zero Datetime=true"
                 _Connection.Open()
             End If
 
