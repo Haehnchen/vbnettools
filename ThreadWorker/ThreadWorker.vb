@@ -1,4 +1,5 @@
 ﻿'$Id$
+'$HeadURL$
 ''' <summary>
 ''' Simple template for Threads usage
 ''' </summary>
@@ -131,8 +132,11 @@ Public MustInherit Class ThreadWorker
             'for thread safety: before do something with this variable set new value 
             _CurrentPosition += 1
 
+            'do the funny stuff
+            Dim BackStr As String = WorkItem(_CurrentPosition - 1, Thread)
+
             'Calls WorkItem return text and raise the event
-            RaiseEvent ItemFinished(_CurrentPosition - 1, Thread, WorkItem(_CurrentPosition - 1, Thread))
+            RaiseEvent ItemFinished(_CurrentPosition - 1, Thread, BackStr)
         Loop
     End Sub
     ''' <summary>
