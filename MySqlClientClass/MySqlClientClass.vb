@@ -123,6 +123,15 @@ Public Class MySqlClientClass
         Return Me.CommandToDatatable(oCommand)
 
     End Function
+
+    Public Function SelectRaw(ByVal ValidSQLStatement As String) As SQLResult
+        Dim oCommand As MySqlCommand = _Connection.CreateCommand
+
+        oCommand.CommandText = ValidSQLStatement
+
+        Return Me.CommandToDatatable(oCommand)
+
+    End Function
     ''' <summary>
     ''' Insert/Update field to table with one Primary key and auto_increment and return the primary key as integer
     ''' </summary>
@@ -308,6 +317,11 @@ Public Class MySqlClientClass
     Private Function SingleFieldToList(ByVal fields As MySqlClientClass.FieldDefinition) As List(Of MySqlClientClass.FieldDefinition)
         Dim tList As New List(Of MySqlClientClass.FieldDefinition)
         tList.Add(fields)
+        Return tList
+    End Function
+    Shared Function SingleFieldToList(ByVal FieldName As String, ByVal FieldValue As String) As List(Of MySqlClientClass.FieldDefinition)
+        Dim tList As New List(Of MySqlClientClass.FieldDefinition)
+        tList.Add(New MySqlClientClass.FieldDefinition(FieldName, FieldValue))
         Return tList
     End Function
 #End Region
