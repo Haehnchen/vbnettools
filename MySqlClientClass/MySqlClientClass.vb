@@ -6,11 +6,13 @@ Imports MySql.Data.MySqlClient
 Public Class MySqlClientClass
     Private _Connection As New MySqlConnection
     Private _ConnectionInfo As ClassConnectionInfo
+    Private _LastError As String = ""
+
     Public Sub New(ByVal ConnectionInfo As ClassConnectionInfo)
         _ConnectionInfo = ConnectionInfo
     End Sub
 
-    Function Connect()
+    Function Connect() As Boolean
         Try
             If _Connection.State = ConnectionState.Closed Then
                 _Connection.ConnectionString = "DATABASE=" & _ConnectionInfo.Database & ";" & _
@@ -21,10 +23,11 @@ Public Class MySqlClientClass
             End If
 
         Catch ex As Exception
-            MsgBox("Error Connecting to the database: " & ex.Message)
+            _LastError = "Error Connecting to the database: " & ex.Message
             Return False
         End Try
-        Return False
+
+        Return True
     End Function
     Public Sub Disconnect()
         Try
@@ -35,6 +38,11 @@ Public Class MySqlClientClass
 
         End Try
     End Sub
+    ReadOnly Property LastError() As String
+        Get
+            Return _LastError
+        End Get
+    End Property
     ''' <summary>
     ''' Will insert the values of the SetFields and WhereDefinition.
     ''' If we get any Duplicate Keys we update the fields out of SetFields.
